@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, interval, map } from 'rxjs';
+import { Observable, interval, map, share } from 'rxjs'; // <--- Import 'share'
 
 export interface SensorReading {
   id: string;
@@ -10,24 +10,32 @@ export interface SensorReading {
   providedIn: 'root'
 })
 export class SimulationService {
+  // Store the shared stream so we don't create new ones
+  private sharedStream$!: Observable<SensorReading[]>;
 
-  // Simulates a stream of sensor updates every 1 second
   getSensorStream(nodeIds: string[]): Observable<SensorReading[]> {
-    return interval(1000).pipe(
+    // If the stream already exists, return it (Singleton Pattern)
+    if (this.sharedStream$) {
+      return this.sharedStream$;
+    }
+
+    // Otherwise, create it and mark it as shared
+    this.sharedStream$ = interval(1000).pipe(
       map(() => {
         return nodeIds.map(id => {
-          // 1. Generate normal noise (40-60 degrees)
           let newTemp = 40 + Math.random() * 20;
 
-          // 2. Anomaly Injection: Occasionally spike "Syntagma Substation"
-          // "Neuro" aspect: This simulates a detected anomaly pattern
+          // The "Anomaly" Logic
           if (id === 'sub-syntagma' && Math.random() > 0.85) {
-            newTemp = 95; // CRITICAL OVERHEAT
+            newTemp = 95; 
           }
 
           return { id, temperature: newTemp };
         });
-      })
+      }),
+      share() // <--- THE MAGIC OPERATOR: Makes the stream "Hot"
     );
+
+    return this.sharedStream$;
   }
 }

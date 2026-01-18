@@ -1,0 +1,12 @@
+.dashboard {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: #000;
+  
+  .panel {
+    flex: 1; /* 50% width each */
+    position: relative;
+    border: 1px solid #333;
+  }
+}

@@ -1,0 +1,38 @@
+.graph-container {
+  position: relative;
+  height: 100%; /* Fills the parent panel */
+  width: 100%;
+  background: #1e1e1e; /* Slightly lighter than map for contrast */
+  overflow: hidden;
+}
+
+.graph-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  pointer-events: none;
+  
+  h3 { margin: 0; font-size: 1.1rem; color: #ff0055; } /* "Cyber" Pink/Red */
+  p { margin: 0; font-size: 0.8rem; color: #aaa; }
+}
+
+/* These styles apply to elements created dynamically by D3 */
+::ng-deep {
+  .link { 
+    stroke: #555; 
+    stroke-opacity: 0.6; 
+    stroke-width: 1.5px; 
+  }
+  
+  .node { 
+    cursor: pointer; 
+    stroke: #fff; 
+    stroke-width: 1.5px; 
+    transition: stroke-width 0.2s;
+  }
+  
+  .node:hover { 
+    stroke: #00bcd4; /* Cyan highlight on hover */
+    stroke-width: 3px; 
+  }
+}
