@@ -1,94 +1,107 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Store } from '@ngrx/store';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import * as L from 'leaflet';
-import { Subscription } from 'rxjs';
-import { InfrastructureNode } from '../../models/infrastructure.model';
-import { SimulationService } from '../../services/simulation';
-import { selectNodes } from '../../store/infrastructure.selectors';
+import { SimulationService } from '../../../../src/app/services/simulation';
 
 @Component({
   selector: 'app-geo-map',
   standalone: true,
-  template: `<div id="map" style="height: 500px; width: 100%;"></div>`
+  imports: [CommonModule, LeafletModule],
+  template: `
+    <div style="height: 400px;"
+         leaflet 
+         [leafletOptions]="options"
+         (leafletMapReady)="onMapReady($event)">
+    </div>
+  `,
+  styles: []
 })
-export class GeoMapComponent implements OnInit, OnDestroy {
-  private map!: L.Map;
-  private markers: Map<string, L.CircleMarker> = new Map();
-  private sub = new Subscription();
+export class GeoMapComponent implements OnInit {
+  map!: L.Map;
+  markers: { [id: string]: L.Marker } = {};
 
-  constructor(
-    private store: Store,
-    private simService: SimulationService 
-  ) {}
+  // Αρχικές ρυθμίσεις χάρτη (Αθήνα)
+  options = {
+    layers: [
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' })
+    ],
+    zoom: 13,
+    center: L.latLng(37.9838, 23.7275)
+  };
+
+  constructor(private simService: SimulationService) {}
 
   ngOnInit() {
-    this.initMap();
+    // 1. Ακρόαση Τοπολογίας (Πραγματικές Τοποθεσίες από Python)
+    this.simService.getTopology().subscribe((nodes: any[]) => {
+      nodes.forEach(node => {
+        this.addMarker(node.id, node.lat, node.lng, node.name);
+      });
+    });
 
-    // 1. Load Static Nodes from Store
-    this.sub.add(
-      this.store.select(selectNodes).subscribe(nodes => {
-        if (nodes.length) this.renderNodes(nodes);
-      })
-    );
-
-    // 2. Load Live Simulation Data directly from Service
-    this.sub.add(
-      this.simService.getSimulation().subscribe(readings => {
-        readings.forEach(reading => {
-          this.updateMarker(reading.id, reading.val, reading.type);
-        });
-      })
-    );
-  }
-
-  private initMap(): void {
-    this.map = L.map('map').setView([37.979, 23.736], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
-  }
-
-  private renderNodes(nodes: InfrastructureNode[]): void {
-    nodes.forEach(node => {
-      const color = node.type === 'substation' ? '#3f51b5' : '#f44336';
+    // 2. Ακρόαση Δεδομένων (Metrics)
+    // ΠΡΟΣΟΧΗ: Χρησιμοποιούμε το getUpdates() και παίρνουμε το data.metrics
+    this.simService.getUpdates().subscribe((data: any) => {
+      const readings = data.metrics; // <--- Εδώ είναι η αλλαγή
       
-      const marker = L.circleMarker(node.location, {
-        radius: 10,
-        fillColor: color,
-        color: '#fff',
-        weight: 2,
-        fillOpacity: 0.8
-      }).addTo(this.map);
-
-      marker.bindPopup(`
-        <b>${node.name}</b><br>
-        Type: ${node.type}<br>
-        ID: ${node.id}
-      `);
-
-      this.markers.set(node.id, marker);
+      if (readings) {
+        readings.forEach((r: any) => {
+          this.updateMarkerColor(r.id, r.val);
+        });
+      }
     });
   }
 
-  private updateMarker(id: string, val: number, type: string) {
-    const marker = this.markers.get(id);
-    if (marker) {
-      // PhD Logic: Χρωματισμός βάσει τύπου και τιμής
-      let color = '#4caf50'; // Green (Safe)
-      
-      if (type === 'temp' && val > 90) color = '#f44336'; // Red (Fire)
-      if (type === 'load' && val > 90) color = '#ff9800'; // Orange (Overload)
-      if (type === 'fuel' && val < 20) color = '#9c27b0'; // Purple (Empty)
-
-      marker.setStyle({ fillColor: color });
-      
-      // Update Popup Content dynamically
-      const currentPopup = marker.getPopup()?.getContent() as string;
-      if (currentPopup) {
-         marker.setPopupContent(currentPopup.split('<hr>')[0] + `<hr>Current Val: ${val.toFixed(1)}`);
-      }
-    }
+  onMapReady(map: L.Map) {
+    this.map = map;
   }
 
-  ngOnDestroy() {
-    this.sub.unsubscribe();
+  addMarker(id: string, lat: number, lng: number, title: string) {
+    if (this.markers[id]) return;
+
+    const marker = L.marker([lat, lng], {
+      icon: L.icon({
+        // Τώρα δείχνουμε στα τοπικά assets που ρυθμίσαμε
+        iconUrl: 'assets/marker-icon.png',
+        shadowUrl: 'assets/marker-shadow.png',
+        
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      }),
+      title: title
+    }).addTo(this.map);
+
+    marker.bindPopup(`
+      <div style="text-align: center;">
+        <b style="font-size: 1.1em;">${title}</b><br>
+        <span style="color: #666;">ID: ${id}</span>
+      </div>
+    `);
+    
+    this.markers[id] = marker;
+  }
+
+  updateMarkerColor(id: string, val: number) {
+    const marker = this.markers[id];
+    if (!marker) return;
+
+    // Απλή λογική χρωμάτων για το demo
+    // Κόκκινο αν > 90 (φορτίο) ή < 20 (καύσιμο)
+    // Προσαρμογή: Το Σύνταγμα (temp) θέλει άλλη λογική, αλλά για τώρα το αφήνουμε απλό
+    let isCritical = false;
+    
+    if (id === 'gen-evangelismos' && val < 20) isCritical = true;
+    if (id !== 'gen-evangelismos' && val > 90) isCritical = true;
+    
+    // Εδώ κανονικά αλλάζουμε το εικονίδιο. 
+    // Για απλότητα στο demo, απλά ανοίγουμε το popup αν είναι critical
+    if (isCritical) {
+        marker.openPopup(); 
+    } else {
+        marker.closePopup();
+    }
   }
 }
