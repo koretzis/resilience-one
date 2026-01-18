@@ -1,39 +1,53 @@
 import { Injectable } from '@angular/core';
-import { Observable, interval, map, share } from 'rxjs'; // <--- Import 'share'
+import { Observable, interval, map, share, tap, Subject } from 'rxjs'; // <--- +Subject
+import { Socket } from 'ngx-socket-io';
+import { SensorReading } from '../models/infrastructure.model';
 
-export interface SensorReading {
-  id: string;
-  temperature: number;
-}
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class SimulationService {
-  // Store the shared stream so we don't create new ones
   private sharedStream$!: Observable<SensorReading[]>;
+  private timeStep = 0; 
+  
+  // 1. Δημιουργούμε ένα κανάλι για τα Alerts
+  public alertSubject = new Subject<any>();
 
-  getSensorStream(nodeIds: string[]): Observable<SensorReading[]> {
-    // If the stream already exists, return it (Singleton Pattern)
-    if (this.sharedStream$) {
-      return this.sharedStream$;
-    }
+  constructor(private socket: Socket) {
+    this.socket.fromEvent('inference_alert').subscribe((data: any) => {
+      console.log(`🦉 ALERT RECEIVED: [${data.type}] ${data.msg}`);
+      
+      // 2. Στέλνουμε το Alert σε όποιον ακούει (στο UI)
+      this.alertSubject.next(data);
+    });
+  }
 
-    // Otherwise, create it and mark it as shared
+  // Helper για να ακούει το Component
+  getAlerts(): Observable<any> {
+    return this.alertSubject.asObservable();
+  }
+
+  getSimulation(): Observable<SensorReading[]> {
+    if (this.sharedStream$) return this.sharedStream$;
+
     this.sharedStream$ = interval(1000).pipe(
       map(() => {
-        return nodeIds.map(id => {
-          let newTemp = 40 + Math.random() * 20;
+        this.timeStep++;
+        console.log(`⏱️ Step: ${this.timeStep}`);
 
-          // The "Anomaly" Logic
-          if (id === 'sub-syntagma' && Math.random() > 0.85) {
-            newTemp = 95; 
-          }
+        // ΣΕΝΑΡΙΟ:
+        let syntagmaTemp = this.timeStep >= 6 ? 95 : 45; 
+        let omoniaLoad = this.timeStep >= 12 ? 95 : 45; 
+        let genFuel = this.timeStep >= 20 ? 15 : 100;
 
-          return { id, temperature: newTemp };
-        });
+        return [
+          { id: 'sub-syntagma', val: syntagmaTemp, type: 'temp' },
+          { id: 'sub-omonia', val: omoniaLoad, type: 'load' },
+          { id: 'gen-evangelismos', val: genFuel, type: 'fuel' }
+        ] as SensorReading[];
       }),
-      share() // <--- THE MAGIC OPERATOR: Makes the stream "Hot"
+      tap((data) => {
+        this.socket.emit('sensor_update', data);
+      }),
+      share()
     );
 
     return this.sharedStream$;

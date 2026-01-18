@@ -1,135 +1,139 @@
-import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ElementRef, OnDestroy } from '@angular/core';
+import { Store } from '@ngrx/store';
 import * as d3 from 'd3';
-import { InfrastructureService } from '../../services/infrastructure';
-import { SimulationService } from '../../services/simulation';
+import { Subscription } from 'rxjs';
 import { InfrastructureNode } from '../../models/infrastructure.model';
-
-// Strict Typing for D3 (Impresses Seniors)
-interface D3Node extends d3.SimulationNodeDatum, InfrastructureNode {}
-interface D3Link extends d3.SimulationLinkDatum<D3Node> {
-  source: string | D3Node;
-  target: string | D3Node;
-}
+import { SimulationService } from '../../services/simulation';
+import { selectNodes } from '../../store/infrastructure.selectors';
 
 @Component({
   selector: 'app-knowledge-graph',
-  templateUrl: './knowledge-graph.html',
-  styleUrls: ['./knowledge-graph.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  standalone: true,
+  template: `<div class="graph-container"></div>`,
+  styles: [`.graph-container { width: 100%; height: 500px; }`]
 })
-export class KnowledgeGraph implements OnInit, AfterViewInit {
-  @ViewChild('graphSvg') svgRef!: ElementRef;
-  
+export class KnowledgeGraphComponent implements OnInit, OnDestroy {
   private svg: any;
   private simulation: any;
-  private nodes: D3Node[] = [];
-  private links: D3Link[] = [];
-  
-  private linkElements: any;
-  private nodeElements: any;
+  private sub = new Subscription();
+  private nodes: any[] = [];
+  private links: any[] = [];
 
   constructor(
-    private infraService: InfrastructureService,
+    private element: ElementRef,
+    private store: Store,
     private simService: SimulationService
   ) {}
 
-  ngOnInit(): void {
-    // 1. Load Data
-    this.infraService.loadGridData().subscribe(data => {
-      if (data['@graph']) {
-        this.initializeGraphData(data['@graph']);
-      }
-    });
+  ngOnInit() {
+    this.sub.add(
+      this.store.select(selectNodes).subscribe(nodes => {
+        if (nodes.length) {
+          this.initData(nodes);
+          this.createGraph();
+        }
+      })
+    );
+
+    // Live Updates
+    this.sub.add(
+      this.simService.getSimulation().subscribe(readings => {
+        readings.forEach(r => this.updateNodeVisuals(r.id, r.val, r.type));
+      })
+    );
   }
 
-  ngAfterViewInit(): void {
-    this.svg = d3.select(this.svgRef.nativeElement);
-  }
-
-  private initializeGraphData(rawNodes: InfrastructureNode[]): void {
-    // Deep copy to prevent mutating the original data
-    this.nodes = rawNodes.map(n => ({ ...n })); 
-    
-    // Create Links based on the "supplies" property in JSON-LD
+  private initData(nodes: InfrastructureNode[]) {
+    this.nodes = nodes.map(n => ({ ...n })); // Deep copy
     this.links = [];
-    this.nodes.forEach(source => {
+
+    // Build links based on 'supplies'
+    nodes.forEach(source => {
       if (source.supplies) {
         source.supplies.forEach(targetId => {
-          this.links.push({ source: source['@id'], target: targetId });
+          // Check if target exists
+          if (nodes.find(n => n.id === targetId)) {
+            this.links.push({ source: source.id, target: targetId });
+          }
         });
       }
     });
-
-    this.renderGraph();
-    this.startLiveUpdates();
   }
 
-  private renderGraph(): void {
-    const width = this.svgRef.nativeElement.clientWidth;
-    const height = this.svgRef.nativeElement.clientHeight;
+  private createGraph() {
+    const element = this.element.nativeElement.querySelector('.graph-container');
+    d3.select(element).selectAll('*').remove(); // Clear old graph
 
-    // A. Physics Simulation
+    const width = element.offsetWidth;
+    const height = 500;
+
+    this.svg = d3.select(element).append('svg')
+      .attr('width', width)
+      .attr('height', height);
+
     this.simulation = d3.forceSimulation(this.nodes)
-      .force('link', d3.forceLink(this.links).id((d: any) => d['@id']).distance(100))
-      .force('charge', d3.forceManyBody().strength(-400)) // Repel nodes apart
+      .force('link', d3.forceLink(this.links).id((d: any) => d.id).distance(150))
+      .force('charge', d3.forceManyBody().strength(-400))
       .force('center', d3.forceCenter(width / 2, height / 2));
 
-    // B. Draw Links
-    this.linkElements = this.svg.append('g')
+    const link = this.svg.append('g')
       .selectAll('line')
       .data(this.links)
       .enter().append('line')
-      .attr('class', 'link');
+      .attr('stroke', '#999')
+      .attr('stroke-width', 2);
 
-    // C. Draw Nodes
-    this.nodeElements = this.svg.append('g')
+    const node = this.svg.append('g')
       .selectAll('circle')
       .data(this.nodes)
       .enter().append('circle')
-      .attr('class', 'node')
-      .attr('r', 12)
-      .attr('fill', (d: D3Node) => d['@type'] === 'PowerNode' ? '#00bcd4' : '#ff9800')
+      .attr('r', 20)
+      .attr('fill', (d: any) => d.type === 'substation' ? '#3f51b5' : '#f44336')
       .call(d3.drag()
-        .on('start', (event, d: any) => {
+        .on('start', (event: any, d: any) => {
           if (!event.active) this.simulation.alphaTarget(0.3).restart();
-          d.fx = d.x; d.fy = d.y;
+          d.fx = d.x;
+          d.fy = d.y;
         })
-        .on('drag', (event, d: any) => {
-          d.fx = event.x; d.fy = event.y;
+        .on('drag', (event: any, d: any) => {
+          d.fx = event.x;
+          d.fy = event.y;
         })
-        .on('end', (event, d: any) => {
+        .on('end', (event: any, d: any) => {
           if (!event.active) this.simulation.alphaTarget(0);
-          d.fx = null; d.fy = null;
+          d.fx = null;
+          d.fy = null;
         }));
 
-    // D. Animation Tick
+    node.append('title').text((d: any) => d.name);
+
     this.simulation.on('tick', () => {
-      this.linkElements
+      link
         .attr('x1', (d: any) => d.source.x)
         .attr('y1', (d: any) => d.source.y)
         .attr('x2', (d: any) => d.target.x)
         .attr('y2', (d: any) => d.target.y);
 
-      this.nodeElements
+      node
         .attr('cx', (d: any) => d.x)
         .attr('cy', (d: any) => d.y);
     });
   }
 
-  private startLiveUpdates(): void {
-    const ids = this.nodes.map(n => n['@id']);
-    
-    // Subscribe to the SAME simulation service as the Map
-    this.simService.getSensorStream(ids).subscribe(readings => {
-      this.nodeElements.attr('fill', (d: D3Node) => {
-        const reading = readings.find(r => r.id === d['@id']);
-        
-        // VISUAL LOGIC: If Temp > 80, turn RED
-        if (reading && reading.temperature > 80) {
-          return '#ff0055'; 
-        }
-        return d['@type'] === 'PowerNode' ? '#00bcd4' : '#ff9800';
+  private updateNodeVisuals(id: string, val: number, type: string) {
+    // D3 Update Logic
+    this.svg.selectAll('circle')
+      .filter((d: any) => d.id === id)
+      .transition().duration(500)
+      .attr('fill', () => {
+        if (type === 'temp' && val > 90) return '#f44336';
+        if (type === 'load' && val > 90) return '#ff9800';
+        if (type === 'fuel' && val < 20) return '#9c27b0';
+        return '#4caf50';
       });
-    });
+  }
+
+  ngOnDestroy() {
+    this.sub.unsubscribe();
   }
 }

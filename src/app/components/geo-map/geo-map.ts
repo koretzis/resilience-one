@@ -1,90 +1,94 @@
-import { Component, AfterViewInit, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Store } from '@ngrx/store';
 import * as L from 'leaflet';
-import { InfrastructureService } from '../../services/infrastructure';
+import { Subscription } from 'rxjs';
 import { InfrastructureNode } from '../../models/infrastructure.model';
 import { SimulationService } from '../../services/simulation';
+import { selectNodes } from '../../store/infrastructure.selectors';
 
 @Component({
   selector: 'app-geo-map',
-  templateUrl: './geo-map.html',
-  styleUrls: ['./geo-map.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  standalone: true,
+  template: `<div id="map" style="height: 500px; width: 100%;"></div>`
 })
-export class GeoMap implements AfterViewInit, OnInit {
+export class GeoMapComponent implements OnInit, OnDestroy {
   private map!: L.Map;
-  private markers: Map<string, L.CircleMarker> = new Map(); // Store markers to update them later
+  private markers: Map<string, L.CircleMarker> = new Map();
+  private sub = new Subscription();
 
-constructor(
-  private infraService: InfrastructureService,
-  private simService: SimulationService // Inject here
-) {}
+  constructor(
+    private store: Store,
+    private simService: SimulationService 
+  ) {}
 
-  ngAfterViewInit(): void {
+  ngOnInit() {
     this.initMap();
-  }
 
-  ngOnInit(): void {
-    // Load the JSON-LD data and plot it
-    this.infraService.loadGridData().subscribe(data => {
-      this.plotNodes(data['@graph']);
-    });
+    // 1. Load Static Nodes from Store
+    this.sub.add(
+      this.store.select(selectNodes).subscribe(nodes => {
+        if (nodes.length) this.renderNodes(nodes);
+      })
+    );
+
+    // 2. Load Live Simulation Data directly from Service
+    this.sub.add(
+      this.simService.getSimulation().subscribe(readings => {
+        readings.forEach(reading => {
+          this.updateMarker(reading.id, reading.val, reading.type);
+        });
+      })
+    );
   }
 
   private initMap(): void {
-    // Centered on Athens
-    this.map = L.map('map').setView([37.979, 23.735], 13);
-
-    // Dark Mode Tiles (CartoDB Dark Matter) - Perfect for "Crisis" dashboards
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-    }).addTo(this.map);
+    this.map = L.map('map').setView([37.979, 23.736], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
   }
 
-  private plotNodes(nodes: InfrastructureNode[]): void {
-    const nodeIds: string[] = [];
+  private renderNodes(nodes: InfrastructureNode[]): void {
     nodes.forEach(node => {
-      // Color logic: Power Nodes = Cyan, Hospitals = Orange
-      const color = node['@type'] === 'PowerNode' ? '#00bcd4' : '#ff9800';
-
+      const color = node.type === 'substation' ? '#3f51b5' : '#f44336';
+      
       const marker = L.circleMarker(node.location, {
-        radius: 8,
+        radius: 10,
         fillColor: color,
         color: '#fff',
-        weight: 1,
-        opacity: 1,
+        weight: 2,
         fillOpacity: 0.8
       }).addTo(this.map);
 
-      // Bind a semantic popup (Good for PhD demo)
       marker.bindPopup(`
-        <b>${node.label}</b><br>
-        Type: ${node['@type']}<br>
-        Status: ${node.status}
+        <b>${node.name}</b><br>
+        Type: ${node.type}<br>
+        ID: ${node.id}
       `);
 
-      // Save reference so we can update color later by ID
-      this.markers.set(node['@id'], marker);
-      nodeIds.push(node['@id']); // Collect IDs
+      this.markers.set(node.id, marker);
     });
-
-    // Start the "IoT Stream"
-    this.startLiveUpdates(nodeIds);
   }
-  private startLiveUpdates(ids: string[]): void {
-  this.simService.getSensorStream(ids).subscribe(readings => {
-    readings.forEach(reading => {
-      const marker = this.markers.get(reading.id);
-      if (marker) {
-        // Visual Logic: If Temp > 80, turn RED (Anomaly)
-        const isCritical = reading.temperature > 80;
-        const newColor = isCritical ? '#ff0055' : (reading.id.includes('hosp') ? '#ff9800' : '#00bcd4');
-        
-        marker.setStyle({ fillColor: newColor });
-        
-        // Optional: Pulse radius effect for critical nodes
-        marker.setRadius(isCritical ? 12 : 8);
+
+  private updateMarker(id: string, val: number, type: string) {
+    const marker = this.markers.get(id);
+    if (marker) {
+      // PhD Logic: Χρωματισμός βάσει τύπου και τιμής
+      let color = '#4caf50'; // Green (Safe)
+      
+      if (type === 'temp' && val > 90) color = '#f44336'; // Red (Fire)
+      if (type === 'load' && val > 90) color = '#ff9800'; // Orange (Overload)
+      if (type === 'fuel' && val < 20) color = '#9c27b0'; // Purple (Empty)
+
+      marker.setStyle({ fillColor: color });
+      
+      // Update Popup Content dynamically
+      const currentPopup = marker.getPopup()?.getContent() as string;
+      if (currentPopup) {
+         marker.setPopupContent(currentPopup.split('<hr>')[0] + `<hr>Current Val: ${val.toFixed(1)}`);
       }
-    });
-  });
+    }
+  }
+
+  ngOnDestroy() {
+    this.sub.unsubscribe();
   }
 }

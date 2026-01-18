@@ -1,10 +1,45 @@
-<div class="dashboard">
-  <div class="panel left">
-    <app-geo-map></app-geo-map>
-    <app-alert-panel></app-alert-panel>
-  </div>
+<div class="dashboard-container">
   
-  <div class="panel right">
-    <app-knowledge-graph></app-knowledge-graph>
+  <div *ngIf="activeAlert" 
+       class="alert-banner"
+       [class.banner-critical]="activeAlert.type === 'CRITICAL'"
+       [class.banner-warning]="activeAlert.type === 'WARNING'">
+    <div class="alert-icon">
+      {{ activeAlert.type === 'CRITICAL' ? '🚨' : '⚠️' }}
+    </div>
+    <div class="alert-content">
+      <strong>{{ activeAlert.type }} ALERT DETECTED</strong>
+      <p>Owl Reasoning: {{ activeAlert.msg }}</p>
+    </div>
+  </div>
+
+  <h1>⚡ Resilience Engine: Neuro-Symbolic Monitor</h1>
+  
+  <div class="status-panel">
+    <div class="card" [class.danger]="getValue('sub-syntagma') > 90">
+      <h3>🏛️ Syntagma</h3>
+      <p>Temperature</p>
+      <h2>{{ getValue('sub-syntagma').toFixed(1) }}°C</h2>
+      <small *ngIf="getValue('sub-syntagma') > 90">🔥 OVERHEATING</small>
+    </div>
+
+    <div class="card" [class.warning]="getValue('sub-omonia') > 90">
+      <h3>🏙️ Omonia</h3>
+      <p>Grid Load</p>
+      <h2>{{ getValue('sub-omonia').toFixed(1) }}%</h2>
+      <small *ngIf="getValue('sub-omonia') > 90">⚡ OVERLOADED</small>
+    </div>
+
+    <div class="card" [class.critical]="getValue('gen-evangelismos') < 20">
+      <h3>🏥 Generator</h3>
+      <p>Fuel Level</p>
+      <h2>{{ getValue('gen-evangelismos').toFixed(1) }}%</h2>
+      <small *ngIf="getValue('gen-evangelismos') < 20">⛽ EMPTY</small>
+    </div>
+  </div>
+
+  <div class="map-wrapper">
+    <h3>📍 Geospatial Live View</h3>
+    <app-geo-map></app-geo-map>
   </div>
 </div>

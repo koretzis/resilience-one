@@ -1,23 +1,100 @@
-.dashboard {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  background-color: #000;
-  
-  /* Προσθήκη για Mobile */
-  @media (max-width: 768px) {
-    flex-direction: column; /* Κάθετη διάταξη */
-    
-    .panel {
-      flex: none; /* Απενεργοποίηση του flex grow */
-      height: 50%; /* Μοιρασμένο ύψος */
-      width: 100%;
-    }
-  }
+.dashboard-container {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
 
-  .panel {
-    flex: 1; 
-    position: relative;
-    border: 1px solid #333;
-  }
+h1 { text-align: center; color: #333; margin-bottom: 30px; }
+
+/* Status Boxes */
+.status-panel {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 200px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border-bottom: 5px solid #4caf50; /* Green default */
+  transition: all 0.3s ease;
+}
+
+.card h2 { font-size: 2.5em; margin: 10px 0; }
+.card small { font-weight: bold; display: block; margin-top: 5px; }
+
+/* Dynamic States */
+.danger { background-color: #ffebee; border-bottom-color: #f44336; color: #d32f2f; }
+.warning { background-color: #fff3e0; border-bottom-color: #ff9800; color: #e65100; }
+.critical { background-color: #f3e5f5; border-bottom-color: #9c27b0; color: #7b1fa2; }
+
+/* Map Section */
+.map-wrapper {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  height: 550px;
+}
+
+/* ALERT BANNER STYLES */
+.alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  animation: slideDown 0.5s ease-out;
+  border: 2px solid transparent;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.alert-icon {
+  font-size: 2.5rem;
+  margin-right: 20px;
+}
+
+.alert-content strong {
+  display: block;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.alert-content p {
+  margin: 5px 0 0 0;
+  font-size: 1rem;
+}
+
+/* WARNING STYLE (Orange) */
+.banner-warning {
+  background-color: #fff3e0;
+  border-color: #ff9800;
+  color: #e65100;
+}
+
+/* CRITICAL STYLE (Red + Pulse Animation) */
+.banner-critical {
+  background-color: #ffebee;
+  border-color: #f44336;
+  color: #d32f2f;
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
 }

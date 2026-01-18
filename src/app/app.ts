@@ -1,44 +1,58 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { GeoMap } from './components/geo-map/geo-map';
-import { KnowledgeGraph } from './components/knowledge-graph/knowledge-graph';
-import { AlertPanel } from './components/alert-panel/alert-panel';
-import { Store } from '@ngrx/store';
-import { loadGraphSuccess, updateReadings } from './store/infrastructure.actions';
-import { InfrastructureService } from './services/infrastructure';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { SimulationService } from './services/simulation';
-
+import { GeoMapComponent } from './components/geo-map/geo-map';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, GeoMap, KnowledgeGraph, AlertPanel],
+  standalone: true,
+  imports: [CommonModule, GeoMapComponent],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrls: ['./app.scss']
 })
 export class App implements OnInit {
+  networkStatus: any[] = [
+    { id: 'sub-syntagma', val: 45, type: 'temp' },
+    { id: 'sub-omonia', val: 45, type: 'load' },
+    { id: 'gen-evangelismos', val: 100, type: 'fuel' }
+  ];
+
+  // Μεταβλητές για το Popup Alert
+  activeAlert: { type: string, msg: string } | null = null;
+
   constructor(
-    private store: Store, // Inject Store
-    private infra: InfrastructureService,
-    private sim: SimulationService
+    private simService: SimulationService,
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit() {
-    // 1. Load Static Graph into Store
-    this.infra.loadGridData().subscribe({
-      next: (data) => {
-        this.store.dispatch(loadGraphSuccess({ nodes: data['@graph'] }));
-      
-        // 2. Connect Simulation to Store
-        const ids = data['@graph'].map(n => n['@id']);
-        this.sim.getSensorStream(ids).subscribe(readings => {
-          this.store.dispatch(updateReadings({ readings }));
-        });
-    },
-      error: (err) => {
-        console.error('Critical Failure:', err);
-        // Προαιρετικά: Εμφάνισε ένα alert "System Offline"
-        alert('Failed to load Critical Infrastructure Data. Check connection.');
+    // 1. Ροή Δεδομένων
+    this.simService.getSimulation().subscribe((data) => {
+      this.networkStatus = data;
+      this.cdr.detectChanges();
+    });
+
+    // 2. Ροή Alerts (ΝΕΟ)
+    this.simService.getAlerts().subscribe((alertData) => {
+      this.activeAlert = alertData; // Εμφάνισε το Alert
+      this.cdr.detectChanges();
+
+      // Αν είναι απλό Warning, κρύψε το μετά από 5 δευτερόλεπτα
+      // Αν είναι CRITICAL, άστο να φαίνεται μόνιμα!
+      if (alertData.type === 'WARNING') {
+        setTimeout(() => {
+          // Καθαρίζουμε το alert μόνο αν δεν έχει έρθει νεότερο critical εν τω μεταξύ
+          if (this.activeAlert && this.activeAlert.type === 'WARNING') {
+            this.activeAlert = null;
+            this.cdr.detectChanges();
+          }
+        }, 8000);
       }
     });
+  }
+
+  getValue(nodeId: string): number {
+    const node = this.networkStatus.find(n => n.id === nodeId);
+    return node ? node.val : 0;
   }
 }

@@ -1,89 +1,107 @@
-# Resilience-One: Neuro-Symbolic Crisis Management Twin
+# ⚡ Neuro-Symbolic Resilience Engine
 
-![Angular](https://img.shields.io/badge/Angular-17+-dd0031.svg?style=flat&logo=angular)
-![RxJS](https://img.shields.io/badge/RxJS-Reactive-B7178C.svg?style=flat&logo=reactivex)
-![D3.js](https://img.shields.io/badge/D3.js-Data_Viz-F9A03C.svg?style=flat&logo=d3.js)
-![Status](https://img.shields.io/badge/Status-Prototype-success)
+> **Research Project**: A Hybrid AI System for Detecting Cascading Failures in Critical Infrastructure.
 
-## 📌 Project Overview
+![Status](https://img.shields.io/badge/Status-Stable-success)
+![Stack](https://img.shields.io/badge/Tech-Angular%20%7C%20Python%20%7C%20OWL%2FSWRL-blue)
 
-**Resilience-One** is a real-time Digital Twin prototype designed for **Critical Infrastructure Protection (CIP)**. 
+## 📖 Overview
+This project implements a **Neuro-Symbolic AI architecture** that fuses real-time sensor data (Sub-symbolic/Neural layer) with ontological reasoning (Symbolic layer) to monitor power grid resilience.
 
-It demonstrates a **Neuro-Symbolic AI approach** to crisis management by bridging the gap between sub-symbolic sensor data (Neural/Statistical) and ontology-based knowledge representation (Symbolic). The system simulates an industrial IoT network (Energy Grid & Health dependencies) to predict and visualize cascading failures before they impact critical assets.
-
-This project was developed to demonstrate competencies in **Frontend Engineering (Angular/D3)**, **Real-Time Data Streams**, and **Semantic Knowledge Engineering**.
-
----
+Unlike traditional threshold-based systems, this engine understands **Semantic Context** (e.g., Redundancy, Dependency, Cascading Effects) to distinguish between local faults and systemic collapses.
 
 ## 🚀 Key Features
 
-### 1. Neuro-Symbolic Inference Engine
-* **The "Neuro" Component:** Ingests high-frequency simulated IoT sensor streams (Temperature, Load, Status) using **RxJS** stochastic generators.
-* **The "Symbolic" Component:** Utilizes a **Knowledge Graph** structure (based on JSON-LD) to map interdependencies between Power Substations and Critical Assets (Hospitals, Emergency Services).
-* **Reasoning:** An embedded inference engine detects anomalies in the sensor stream and automatically queries the graph to flag downstream risks (e.g., *"Hospital A is at risk due to failure in Substation B"*).
+### 1. Neuro-Symbolic Reasoning
+- **Data Layer (Python):** Processes raw telemetry (Temperature, Load, Fuel) and handles noise/safety overrides.
+- **Logic Layer (Owlready2 + HermiT):** Uses SWRL rules to infer high-level states:
+  - *Rule 1:* `Loss of Redundancy` → **WARNING** (Grid Unstable).
+  - *Rule 2:* `Grid Lost + Empty Generator` → **CRITICAL** (Total Blackout).
 
-### 2. Dual-View Situational Awareness
-* **Geospatial Twin (Left Panel):** A **Leaflet.js** map providing location-based situational awareness of infrastructure nodes in Athens, Greece.
-* **Semantic Graph (Right Panel):** A **D3.js Force-Directed Graph** visualizing the topological dependencies and "supplies" relationships, enabling visual exploration of the crisis propagation path.
+### 2. Advanced State Management
+- **Zombie Connection Killer:** Automatically detects and blocks stale packets from previous browser sessions to prevent race conditions (flickering alerts) during page refreshes.
+- **Brain Wipe Mechanism:** The Ontology state acts as a singleton and performs a "Hard Reset" upon every new client connection, ensuring a clean simulation environment.
+- **Strict Hierarchical Logic:** Implemented a safety gate where physical constraints (e.g., "Fuel > 20%") override semantic inferences to prevent false positives.
 
-### 3. Enterprise-Grade Architecture
-* **State Management:** Implemented with **NgRx** (Redux pattern) to ensure predictable state transitions and immutable data handling for the inference logic.
-* **Performance:** Optimized rendering using `OnPush` change detection and RxJS `share()` operators to multicast simulation streams, preventing race conditions and redundant computations.
-
----
-
-## 🛠️ Tech Stack
-
-* **Framework:** Angular 17+ (Strict Mode enabled)
-* **State Management:** NgRx (Store, Selectors, Actions)
-* **Visualization:** D3.js (v7), Leaflet
-* **Reactive Programming:** RxJS (Observables, Operators)
-* **Data Format:** JSON-LD (Linked Data) for Semantic Interoperability
-* **Testing:** Jest (Unit Testing for Logic)
+### 3. Real-Time Visualization
+- **Angular Dashboard:** Live monitoring of Critical Assets.
+- **Geospatial Map:** Leaflet.js integration for topological visualization.
+- **Heads-Up Alerts:** Visual warning system for inferred risks.
 
 ---
 
-## 🔬 Scientific & Design Decisions (Architecture Notes)
+## 🛠️ Architecture
 
-### Why Client-Side Reasoning?
-For this prototype, the **Inference Engine** is implemented as a rule-based logic layer within the NgRx Selectors.
-* **Trade-off:** While a full Semantic Web stack would utilize an OWL Reasoner (like HermiT or Pellet) on the backend, this client-side implementation demonstrates the *logic* of cascading failure prediction with zero latency.
-* **Semantic Alignment:** The data model strictly follows **JSON-LD** standards, ensuring that the underlying graph can be easily exported to RDF triples for integration with formal ontologies (e.g., SAREF4ENER).
-
-### Scalability Considerations
-The current visualization renders nodes using SVG (D3) and DOM elements (Leaflet).
-* **Current Capacity:** Optimal for <500 nodes (City-scale district).
-* **Future Scaling:** For nation-scale digital twins (>10,000 nodes), the rendering layer would be migrated to **WebGL (Three.js or Deck.gl)**, and the simulation logic would be offloaded to **Web Workers** to keep the main thread unblocked.
+| Component | Technology | Description |
+|-----------|------------|-------------|
+| **Frontend** | Angular 17+ | Dashboard, Leaflet Map, RxJS Streams. |
+| **Backend** | Python FastAPI | WebSocket Server, Data processing. |
+| **Reasoning** | Owlready2 | Ontology management & SWRL execution. |
+| **Protocol** | Socket.IO | Real-time bi-directional communication. |
 
 ---
 
-## 🚦 Getting Started
+## ⚙️ Installation & Setup
 
 ### Prerequisites
-* Node.js (v18+)
-* Angular CLI
+1. **Node.js** (v18+)
+2. **Python** (3.9+)
+3. **Java Runtime (JRE)** (Required for the HermiT Reasoner)
 
-### Installation
+### 1. Backend Setup
+Navigate to the `backend` folder:
 ```bash
-# Clone the repository
-git clone [https://github.com/YOUR_USERNAME/resilience-one.git](https://github.com/YOUR_USERNAME/resilience-one.git)
+cd backend
+pip install -r requirements.txt
+# Ensure 'resilience.owl' is in the same directory
+```
 
-# Navigate to directory
-cd resilience-one
-
-# Install dependencies
+### 2. Frontend Setup
+Navigate to the root folder:
+```bash
 npm install
+```
 
+---
 
+## ▶️ How to Run
 
-## 🔮 Roadmap & Future Optimizations
+### Step 1: Start the Semantic Engine (Backend)
+```bash
+# In the backend terminal
+python server.py
+```
+*You should see: `✅ Server Ready. Waiting for Browser...`*
 
-To transition this prototype to a production-grade National Digital Twin, the following architectural upgrades are planned:
+### Step 2: Start the Dashboard (Frontend)
+```bash
+# In the frontend terminal
+ng serve
+```
+*Open your browser at `http://localhost:4200`*
 
-### 1. Scalability (Performance)
-* **Web Workers:** Offload the D3 Force Simulation physics engine to a Web Worker thread to maintain 60FPS UI rendering when scaling to >10,000 nodes.
-* **WebGL Rendering:** Migrate visualization layer from SVG to WebGL (using Three.js or Deck.gl) for hardware-accelerated rendering of large-scale topology.
+---
 
-### 2. Semantic Reasoning (Backend)
-* **OWL Integration:** Replace the client-side TypeScript inference logic with a dedicated Semantic Reasoner (e.g., **HermiT** or **Pellet**) running on the backend.
-* **Standard Ontologies:** Map the internal JSON-LD schema to **SAREF4ENER** (Smart Appliances REFerence ontology) to ensure EU-wide interoperability.
+## 🧪 Simulation Scenario (Timeline)
+
+The system runs a **20-second cascading failure simulation** automatically upon connection.
+
+| Time | Event | System Logic | Output |
+|------|-------|--------------|--------|
+| **0-5s** | Normal Ops | All nodes stable. | 🟢 **Safe** |
+| **6s** | Syntagma Fails | Temp > 90°C. Redundancy (Omonia) handles load. | 🟢 **Safe** (Smart Reasoning) |
+| **12s** | Omonia Overloads | Load > 90%. Redundancy Lost. | 🟠 **WARNING**: Grid Lost |
+| **20s** | Generator Empty | Fuel < 20%. Last defense fails. | 🔴 **CRITICAL**: Total Blackout |
+
+---
+
+## 🐛 Troubleshooting
+
+**Q: I see "CRITICAL ALERT" immediately upon refresh.**
+*A: This was the "Zombie Connection" bug. It is fixed in the latest version. The server now enforces a strict session ID check and blocks old session packets.*
+
+**Q: The map shows 0 values.**
+*A: Wait 2-3 seconds. The simulation starts with a small delay to allow the Ontology to initialize and infer the initial state.*
+
+**Q: Reasoner Error in Python Console.**
+*A: Ensure Java is installed and added to your System PATH. Owlready2 needs Java to run the HermiT reasoner.*
