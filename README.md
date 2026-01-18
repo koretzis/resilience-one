@@ -1,59 +1,19 @@
-# ResilienceOne
+# Resilience-One: Neuro-Symbolic Crisis Management Twin
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.5.
+## Project Overview
+A real-time Digital Twin for Critical Infrastructure Protection (CIP). This project demonstrates a **Neuro-Symbolic AI approach** by combining sub-symbolic sensor data processing (Neural) with ontology-based reasoning (Symbolic) to predict cascading failures in power grids.
 
-## Development server
+## Technical Architecture (Senior Hybrid Profile)
+* **Frontend:** Angular 17+ (Strict Mode)
+* **State Management:** NgRx (Redux Pattern) for handling high-frequency IoT streams.
+* **Visualization:** * **Geospatial:** Leaflet.js for situational awareness.
+    * **Graph:** D3.js Force-Directed Graph for dependency analysis.
+* **Data Model:** JSON-LD (Linked Data) ensuring semantic interoperability.
 
-To start a local development server, run:
+## Key Features
+1.  **Real-Time Anomaly Detection:** Simulates IoT sensor streams using RxJS multicasting.
+2.  **Semantic Reasoning Engine:** automatically infers downstream risks (e.g., "Hospital Power Loss") based on upstream failures, bridging the gap between raw data and decision support.
+3.  **Cross-Domain Knowledge:** Visualizes the "supplies" relationships between Energy and Health domains.
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Testing
+* Business logic verified with **Jest** unit tests covering the inference engine.
