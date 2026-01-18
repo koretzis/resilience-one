@@ -24,14 +24,21 @@ export class App implements OnInit {
 
   ngOnInit() {
     // 1. Load Static Graph into Store
-    this.infra.loadGridData().subscribe(data => {
-      this.store.dispatch(loadGraphSuccess({ nodes: data['@graph'] }));
+    this.infra.loadGridData().subscribe({
+      next: (data) => {
+        this.store.dispatch(loadGraphSuccess({ nodes: data['@graph'] }));
       
-      // 2. Connect Simulation to Store
-      const ids = data['@graph'].map(n => n['@id']);
-      this.sim.getSensorStream(ids).subscribe(readings => {
-        this.store.dispatch(updateReadings({ readings }));
-      });
+        // 2. Connect Simulation to Store
+        const ids = data['@graph'].map(n => n['@id']);
+        this.sim.getSensorStream(ids).subscribe(readings => {
+          this.store.dispatch(updateReadings({ readings }));
+        });
+    },
+      error: (err) => {
+        console.error('Critical Failure:', err);
+        // Προαιρετικά: Εμφάνισε ένα alert "System Offline"
+        alert('Failed to load Critical Infrastructure Data. Check connection.');
+      }
     });
   }
 }
