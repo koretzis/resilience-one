@@ -6,7 +6,8 @@ A real-time Digital Twin for Critical Infrastructure Protection (CIP). This proj
 ## Technical Architecture (Senior Hybrid Profile)
 * **Frontend:** Angular 17+ (Strict Mode)
 * **State Management:** NgRx (Redux Pattern) for handling high-frequency IoT streams.
-* **Visualization:** * **Geospatial:** Leaflet.js for situational awareness.
+* **Visualization:** 
+    * **Geospatial:** Leaflet.js for situational awareness.
     * **Graph:** D3.js Force-Directed Graph for dependency analysis.
 * **Data Model:** JSON-LD (Linked Data) ensuring semantic interoperability.
 

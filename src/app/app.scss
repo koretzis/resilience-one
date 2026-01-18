@@ -4,8 +4,19 @@
   width: 100vw;
   background-color: #000;
   
+  /* Προσθήκη για Mobile */
+  @media (max-width: 768px) {
+    flex-direction: column; /* Κάθετη διάταξη */
+    
+    .panel {
+      flex: none; /* Απενεργοποίηση του flex grow */
+      height: 50%; /* Μοιρασμένο ύψος */
+      width: 100%;
+    }
+  }
+
   .panel {
-    flex: 1; /* 50% width each */
+    flex: 1; 
     position: relative;
     border: 1px solid #333;
   }
