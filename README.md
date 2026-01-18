@@ -73,3 +73,17 @@ cd resilience-one
 
 # Install dependencies
 npm install
+
+
+
+## 🔮 Roadmap & Future Optimizations
+
+To transition this prototype to a production-grade National Digital Twin, the following architectural upgrades are planned:
+
+### 1. Scalability (Performance)
+* **Web Workers:** Offload the D3 Force Simulation physics engine to a Web Worker thread to maintain 60FPS UI rendering when scaling to >10,000 nodes.
+* **WebGL Rendering:** Migrate visualization layer from SVG to WebGL (using Three.js or Deck.gl) for hardware-accelerated rendering of large-scale topology.
+
+### 2. Semantic Reasoning (Backend)
+* **OWL Integration:** Replace the client-side TypeScript inference logic with a dedicated Semantic Reasoner (e.g., **HermiT** or **Pellet**) running on the backend.
+* **Standard Ontologies:** Map the internal JSON-LD schema to **SAREF4ENER** (Smart Appliances REFerence ontology) to ensure EU-wide interoperability.

@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import * as d3 from 'd3';
 import { InfrastructureService } from '../../services/infrastructure';
 import { SimulationService } from '../../services/simulation';
@@ -14,7 +14,8 @@ interface D3Link extends d3.SimulationLinkDatum<D3Node> {
 @Component({
   selector: 'app-knowledge-graph',
   templateUrl: './knowledge-graph.html',
-  styleUrls: ['./knowledge-graph.scss']
+  styleUrls: ['./knowledge-graph.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KnowledgeGraph implements OnInit, AfterViewInit {
   @ViewChild('graphSvg') svgRef!: ElementRef;

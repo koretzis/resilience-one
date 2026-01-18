@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnInit } from '@angular/core';
+import { Component, AfterViewInit, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import * as L from 'leaflet';
 import { InfrastructureService } from '../../services/infrastructure';
 import { InfrastructureNode } from '../../models/infrastructure.model';
@@ -7,7 +7,8 @@ import { SimulationService } from '../../services/simulation';
 @Component({
   selector: 'app-geo-map',
   templateUrl: './geo-map.html',
-  styleUrls: ['./geo-map.scss']
+  styleUrls: ['./geo-map.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GeoMap implements AfterViewInit, OnInit {
   private map!: L.Map;

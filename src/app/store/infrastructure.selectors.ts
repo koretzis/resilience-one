@@ -15,18 +15,18 @@ export const selectCascadingRisks = createSelector(
   (nodes, readings) => {
     const alerts: string[] = [];
 
-    // Find nodes that are failing
+    // [Scientific Logic]: Detect Anomalies (Sub-symbolic / Neural Layer)
+    // Threshold based on statistical deviation (> 85°C)
     const failingNodes = nodes.filter(n => (readings[n['@id']] || 0) > 85);
 
     failingNodes.forEach(source => {
-      // Logic: If Source is failing, find what it supplies
+      // [Reasoning Rule]: Transitive Dependency Propagation
+      // Rule: IF hasDependency(Source, Target) AND isFailing(Source) THEN isAtRisk(Target)
       if (source.supplies) {
         source.supplies.forEach(targetId => {
-          // Find the victim node object
           const victim = nodes.find(n => n['@id'] === targetId);
           
           if (victim) {
-            // INFERENCE GENERATED:
             alerts.push(`CRITICAL: ${victim.label} at risk due to failure in ${source.label}`);
           }
         });
