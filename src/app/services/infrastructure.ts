@@ -7,7 +7,7 @@ import { InfrastructureGraph } from '../models/infrastructure.model';
   providedIn: 'root'
 })
 export class InfrastructureService {
-  private dataUrl = 'assets/data/athens-grid.json';
+  private dataUrl = '/assets/data/athens-grid.json';
 
   constructor(private http: HttpClient) { }
 
