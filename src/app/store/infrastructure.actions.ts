@@ -1,6 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { SensorReading } from '../services/simulation';
-import { InfrastructureNode } from '../models/infrastructure.model';
+import { InfrastructureNode, SensorReading } from '../models/infrastructure.model';
 
 // 1. Initialize the Graph (Symbolic Data)
 export const loadGraphSuccess = createAction(
