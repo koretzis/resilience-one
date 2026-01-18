@@ -1,1 +1,11 @@
 /* You can add global styles to this file, and also import other style files */
+/* Import Leaflet CSS */
+@import 'leaflet/dist/leaflet.css';
+
+/* Dark Mode Background for the "Crisis Room" feel */
+body {
+  background-color: #121212;
+  color: #e0e0e0;
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+}
