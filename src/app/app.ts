@@ -1,8 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { GeoMapComponent } from './components/geo-map/geo-map';
-import { KnowledgeGraphComponent } from './components/knowledge-graph/knowledge-graph';
-import { AlertPanelComponent } from './components/alert-panel/alert-panel';
+import { GeoMap } from './components/geo-map/geo-map';
+import { KnowledgeGraph } from './components/knowledge-graph/knowledge-graph';
+import { AlertPanel } from './components/alert-panel/alert-panel';
 import { Store } from '@ngrx/store';
 import { loadGraphSuccess, updateReadings } from './store/infrastructure.actions';
 import { InfrastructureService } from './services/infrastructure';
@@ -11,7 +11,7 @@ import { SimulationService } from './services/simulation';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, GeoMapComponent, KnowledgeGraphComponent, AlertPanelComponent],
+  imports: [RouterOutlet, GeoMap, KnowledgeGraph, AlertPanel],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

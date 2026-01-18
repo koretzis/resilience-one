@@ -16,7 +16,7 @@ interface D3Link extends d3.SimulationLinkDatum<D3Node> {
   templateUrl: './knowledge-graph.html',
   styleUrls: ['./knowledge-graph.scss']
 })
-export class KnowledgeGraphComponent implements OnInit, AfterViewInit {
+export class KnowledgeGraph implements OnInit, AfterViewInit {
   @ViewChild('graphSvg') svgRef!: ElementRef;
   
   private svg: any;

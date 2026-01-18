@@ -9,7 +9,7 @@ import { SimulationService } from '../../services/simulation';
   templateUrl: './geo-map.html',
   styleUrls: ['./geo-map.scss']
 })
-export class GeoMapComponent implements AfterViewInit, OnInit {
+export class GeoMap implements AfterViewInit, OnInit {
   private map!: L.Map;
   private markers: Map<string, L.CircleMarker> = new Map(); // Store markers to update them later
 

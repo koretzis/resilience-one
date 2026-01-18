@@ -38,7 +38,7 @@ import { selectCascadingRisks } from '../../store/infrastructure.selectors';
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   `]
 })
-export class AlertPanelComponent {
+export class AlertPanel {
   private store = inject(Store);
   // Select the INTELLIGENT inference, not just raw data
   alerts$ = this.store.select(selectCascadingRisks);
