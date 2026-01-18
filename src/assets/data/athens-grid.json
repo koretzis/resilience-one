@@ -1,0 +1,60 @@
+{
+  "@context": {
+    "ex": "http://example.org/crisis-ontology#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "schema": "http://schema.org/",
+    "PowerNode": "ex:PowerInfrastructure",
+    "CriticalAsset": "ex:CriticalInfrastructure",
+    "supplies": {
+      "@id": "ex:supplies",
+      "@type": "@id"
+    },
+    "location": "schema:geo",
+    "temperature": "ex:currentTemperature"
+  },
+  "@graph": [
+    {
+      "@id": "plant-lavrio",
+      "@type": "PowerNode",
+      "label": "Lavrio Power Plant",
+      "location": [37.715, 24.055],
+      "supplies": ["sub-syntagma", "sub-omonia"],
+      "status": "nominal",
+      "temperature": 65
+    },
+    {
+      "@id": "sub-syntagma",
+      "@type": "PowerNode",
+      "label": "Syntagma Substation",
+      "location": [37.975, 23.733],
+      "supplies": ["hosp-evangelismos"],
+      "status": "nominal",
+      "temperature": 45
+    },
+    {
+      "@id": "sub-omonia",
+      "@type": "PowerNode",
+      "label": "Omonia Substation",
+      "location": [37.984, 23.728],
+      "supplies": ["fire-stn-1"],
+      "status": "nominal",
+      "temperature": 48
+    },
+    {
+      "@id": "hosp-evangelismos",
+      "@type": "CriticalAsset",
+      "label": "Evangelismos Hospital",
+      "location": [37.976, 23.747],
+      "priority": "High",
+      "status": "active"
+    },
+    {
+      "@id": "fire-stn-1",
+      "@type": "CriticalAsset",
+      "label": "Athens Fire Station #1",
+      "location": [37.988, 23.730],
+      "priority": "Medium",
+      "status": "active"
+    }
+  ]
+}
