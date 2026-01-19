@@ -26,22 +26,16 @@ export class KnowledgeGraphComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.sub.add(
-      this.store.select(selectNodes).subscribe(nodes => {
-        if (nodes.length) {
-          this.initData(nodes);
-          this.createGraph();
+    this.simService.getUpdates().subscribe((data: any) => {
+        const readings = data.metrics; // <--- ΠΑΛΙ ΕΔΩ Η ΑΛΛΑΓΗ
+        
+        if (readings) {
+            readings.forEach((r: any) => {
+                this.updateNodeVisuals(r.id, r.val, r.type);
+            });
         }
-      })
-    );
-
-    // Live Updates
-    this.sub.add(
-      this.simService.getSimulation().subscribe(readings => {
-        readings.forEach(r => this.updateNodeVisuals(r.id, r.val, r.type));
-      })
-    );
-  }
+    });
+}
 
   private initData(nodes: InfrastructureNode[]) {
     this.nodes = nodes.map(n => ({ ...n })); // Deep copy

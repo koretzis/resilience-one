@@ -3,146 +3,143 @@ from fastapi import FastAPI
 import socketio
 from owlready2 import *
 import os
-import time
+import pandas as pd
+import joblib
 
-# --- 1. JAVA CONFIG ---
+# ... (Java Path setup remains same) ...
 java_path = r"C:\Program Files\Microsoft\jdk-25.0.1.8-hotspot\bin\java.exe"
 if os.path.exists(java_path): owlready2.JAVA_EXE = java_path
+
+# Load Advanced Assets
+print("🧠 Loading Digital Twin Models...")
+ml_model = joblib.load("advanced_brain.pkl")
+scenario_data = pd.read_csv("scenario_realism.csv")
+data_iterator = 0 
 
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
 app = FastAPI()
 app.mount('/', socketio.ASGIApp(sio, app))
 
-# --- 2. ONTOLOGY SETUP ---
-print("📚 Building Resilience Ontology...")
-onto = get_ontology("http://test.org/resilience.owl")
-
+# ... (Ontology Setup remains same - load resilience.owl) ...
+onto = get_ontology("resilience.owl").load()
 with onto:
-    class InfrastructureNode(Thing): pass
-    class PowerSubstation(InfrastructureNode): pass
-    class CriticalAsset(InfrastructureNode): pass
-    class BackupGenerator(InfrastructureNode): pass
+    # Here we could add rules for "Parent-Child Overload"
+    # For now, we keep the basic logic to avoid breaking changes
+    pass 
 
-    class FailedNode(InfrastructureNode): pass
-    class OverloadedNode(InfrastructureNode): pass
-    class LowFuelGenerator(InfrastructureNode): pass
+# Instances
+with onto:
+    syntagma = onto.PowerSubstation("sub-syntagma")
+    omonia = onto.PowerSubstation("sub-omonia")
+    evangelismos = onto.CriticalAsset("hosp-evangelismos")
+    gen = onto.BackupGenerator("gen-evangelismos")
     
-    class GridUnstable(InfrastructureNode): pass
-    class TotalBlackout(InfrastructureNode): pass
+    # Semantic Tags classes (reference)
+    FailedNode = onto.FailedNode
+    OverloadedNode = onto.OverloadedNode
+    LowFuelGenerator = onto.LowFuelGenerator
+    GridUnstable = onto.GridUnstable
+    TotalBlackout = onto.TotalBlackout
 
-    class supplies(ObjectProperty): domain = [PowerSubstation]; range = [CriticalAsset]
-    class has_backup(ObjectProperty): domain = [CriticalAsset]; range = [BackupGenerator]
-    class is_redundant_to(ObjectProperty): domain = [PowerSubstation]; range = [PowerSubstation]
+# --- REAL TOPOLOGY ---
+REAL_NODES = [
+    {"id": "sub-syntagma", "lat": 37.9755, "lng": 23.7348, "name": "Syntagma HV (Parent)"},
+    {"id": "sub-kypseli",  "lat": 38.0010, "lng": 23.7390, "name": "Kypseli HV (Parent)"},
+    {"id": "sub-omonia",   "lat": 37.9841, "lng": 23.7280, "name": "Omonia MV (Backup)"},
+    {"id": "sub-pagrati",  "lat": 37.9670, "lng": 23.7450, "name": "Pagrati MV (Res)"},
+    {"id": "sub-gazi",     "lat": 37.9780, "lng": 23.7120, "name": "Gazi MV (Ind)"},
+    {"id": "hosp-evangelismos", "lat": 37.9770, "lng": 23.7480, "name": "Evangelismos Hosp"}
+]
 
-    rule1 = Imp() 
-    rule1.set_as_rule("supplies(?p1, ?a), is_redundant_to(?p2, ?p1), FailedNode(?p1), OverloadedNode(?p2) -> GridUnstable(?a)")
-    rule2 = Imp() 
-    rule2.set_as_rule("GridUnstable(?a), has_backup(?a, ?g), LowFuelGenerator(?g) -> TotalBlackout(?a)")
-
-with onto:
-    syntagma = PowerSubstation("sub-syntagma")
-    omonia = PowerSubstation("sub-omonia")
-    evangelismos = CriticalAsset("hosp-evangelismos")
-    gen_evangelismos = BackupGenerator("gen-evangelismos")
-    syntagma.supplies.append(evangelismos)
-    omonia.is_redundant_to.append(syntagma)
-    evangelismos.has_backup.append(gen_evangelismos)
-
-# --- GLOBAL STATE ---
-last_sent_alert = ""
-active_sid = None  # <--- ID ΤΟΥ ΜΟΝΑΔΙΚΟΥ ΕΝΕΡΓΟΥ ΧΡΗΣΤΗ
-
-def hard_reset_ontology():
-    global last_sent_alert
-    print("🔄 ZOMBIE KILLER: WIPING MEMORY...")
-    syntagma.is_a = [PowerSubstation]
-    omonia.is_a = [PowerSubstation]
-    gen_evangelismos.is_a = [BackupGenerator]
-    evangelismos.is_a = [CriticalAsset]
-    last_sent_alert = "" 
-    try:
-        with onto: sync_reasoner(infer_property_values=True)
-    except: pass
-    print("✨ System Clean.")
+active_sid = None
 
 @sio.event
 async def connect(sid, environ):
-    global active_sid
-    print(f"👋 New Captain Detected: {sid}")
-    
-    # Ορίζουμε ότι ΑΥΤΟΣ είναι ο μόνος που έχει δικαίωμα να μιλάει
+    global active_sid, data_iterator
     active_sid = sid
-    
-    hard_reset_ontology()
+    data_iterator = 0 # Start from 00:00
+    print(f"👋 Connected: {sid}. Starting High-Fidelity Simulation.")
+    await sio.emit('topology_init', REAL_NODES)
 
 @sio.event
-async def sensor_update(sid, data):
-    global last_sent_alert, active_sid
+async def request_next_step(sid):
+    global data_iterator, active_sid
+    if sid != active_sid: return
+
+    # Loop Scenario
+    if data_iterator >= len(scenario_data): data_iterator = 0
     
-    # --- ZOMBIE CHECK ---
-    # Αν το ID αυτού που στέλνει δεν είναι το ID του τελευταίου που συνδέθηκε...
-    if sid != active_sid:
-        # ...τότε είναι Zombie! Τον αγνοούμε πλήρως.
-        # print(f"🧟 Ignoring Zombie Packet from {sid}")
-        return 
+    # Read Row
+    row = scenario_data.iloc[data_iterator]
+    # Fast Forward: Skip 10 minutes per tick to see the 24-hour cycle quickly
+    data_iterator += 10 
 
-    updates = data if isinstance(data, list) else [data]
-    current_fuel = 100 
+    # --- VALUES ---
+    temp = row['temp_ambient']
+    l_syn = row['load_syntagma']
+    l_kyp = row['load_kypseli']
+    l_omo = row['load_omonia']
+    l_pag = row['load_pagrati']
+    l_gaz = row['load_gazi']
+    fuel = row['gen_fuel']
+
+    # --- ML PREDICTION ---
+    # Predict based on HV nodes and weather
+    risk_prob = ml_model.predict_proba([[temp, l_syn, l_kyp]])[0][1]
+    risk_percent = round(risk_prob * 100, 1)
+
+    # --- ONTOLOGY LOGIC ---
+    # Syntagma Fails if Temp < 0 AND Load > 95 (Extreme Stress)
     inference_needed = False
+    
+    # Logic: Syntagma Overheat/Stress
+    if l_syn > 95 and temp < 0 and FailedNode not in syntagma.is_a:
+        syntagma.is_a.append(FailedNode); inference_needed = True
+    elif (l_syn <= 95 or temp >= 0) and FailedNode in syntagma.is_a:
+        syntagma.is_a.remove(FailedNode)
 
-    # Cleanup
-    if GridUnstable in evangelismos.is_a: evangelismos.is_a.remove(GridUnstable)
-    if TotalBlackout in evangelismos.is_a: evangelismos.is_a.remove(TotalBlackout)
+    # Logic: Omonia Overloaded (Backup Stress)
+    if l_omo > 90 and OverloadedNode not in omonia.is_a:
+        omonia.is_a.append(OverloadedNode); inference_needed = True
+    elif l_omo <= 90 and OverloadedNode in omonia.is_a:
+        omonia.is_a.remove(OverloadedNode)
 
-    for r in updates:
-        nid, val = r.get('id'), r.get('val')
+    # Logic: Generator
+    if fuel < 20 and LowFuelGenerator not in gen.is_a:
+        gen.is_a.append(LowFuelGenerator); inference_needed = True
 
-        if nid == 'sub-syntagma':
-            if val > 90 and FailedNode not in syntagma.is_a:
-                syntagma.is_a.append(FailedNode); inference_needed = True
-            elif val <= 90 and FailedNode in syntagma.is_a:
-                syntagma.is_a.remove(FailedNode)
-
-        elif nid == 'sub-omonia':
-            if val > 90 and OverloadedNode not in omonia.is_a:
-                omonia.is_a.append(OverloadedNode); inference_needed = True
-            elif val <= 90 and OverloadedNode in omonia.is_a:
-                omonia.is_a.remove(OverloadedNode)
-
-        elif nid == 'gen-evangelismos':
-            current_fuel = val
-            if val < 20 and LowFuelGenerator not in gen_evangelismos.is_a:
-                gen_evangelismos.is_a.append(LowFuelGenerator); inference_needed = True
-            elif val >= 20 and LowFuelGenerator in gen_evangelismos.is_a:
-                gen_evangelismos.is_a.remove(LowFuelGenerator)
-
+    # REASONER
+    alert_type, alert_msg = None, None
     if inference_needed:
         try:
             with onto: sync_reasoner(infer_property_values=True)
-            
-            final_status = "OK"
-            if TotalBlackout in evangelismos.is_a: final_status = "CRITICAL"
-            elif GridUnstable in evangelismos.is_a: final_status = "WARNING"
-            
-            # STRICT SAFETY CHECK
-            if final_status == "CRITICAL" and current_fuel > 20:
-                print("⚠️ Safety Override: Fuel is OK.")
-                final_status = "WARNING"
+            if TotalBlackout in evangelismos.is_a:
+                alert_type, alert_msg = "CRITICAL", "TOTAL BLACKOUT! Grid & Backup Failed."
+            elif GridUnstable in evangelismos.is_a:
+                alert_type, alert_msg = "WARNING", "Grid Instability Detected."
+        except: pass
 
-            # ALERT DISPATCH
-            if final_status == "CRITICAL" and last_sent_alert != "CRITICAL":
-                msg = "TOTAL BLACKOUT! Generator Dead."
-                print(f"🦉 CRITICAL: {msg}")
-                await sio.emit('inference_alert', {'type': 'CRITICAL', 'msg': msg})
-                last_sent_alert = "CRITICAL"
+    # --- PACKET CONSTRUCTION ---
+    metrics = [
+        {'id': 'sub-syntagma', 'val': temp,  'type': 'Amb. Temp (°C)'}, # HV 1
+        {'id': 'sub-kypseli',  'val': l_kyp, 'type': 'Load (%)'},     # HV 2
+        {'id': 'sub-omonia',   'val': l_omo, 'type': 'Load (%)'},     # MV 1
+        {'id': 'sub-pagrati',  'val': l_pag, 'type': 'Load (%)'},     # MV 2 (Res)
+        {'id': 'sub-gazi',     'val': l_gaz, 'type': 'Load (%)'},     # MV 3 (Comm)
+        {'id': 'gen-evangelismos', 'val': fuel, 'type': 'Fuel (%)'}
+    ]
 
-            elif final_status == "WARNING" and last_sent_alert != "WARNING":
-                msg = "Grid Lost. Running on Backup."
-                print(f"🦉 WARNING: {msg}")
-                await sio.emit('inference_alert', {'type': 'WARNING', 'msg': msg})
-                last_sent_alert = "WARNING"
-                
-        except Exception as e: print(f"❌ Error: {e}")
+    payload = {
+        'timestamp': str(row['timestamp']),
+        'metrics': metrics,
+        'prediction': {
+            'risk_percent': risk_percent,
+            'msg': f"Grid Stress Probability: {risk_percent}%"
+        },
+        'alert': {'type': alert_type, 'msg': alert_msg} if alert_type else None
+    }
+
+    await sio.emit('simulation_step', payload)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=5050)

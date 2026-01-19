@@ -11,13 +11,19 @@ import { GeoMapComponent } from './components/geo-map/geo-map';
   styleUrls: ['./app.scss']
 })
 export class App implements OnInit {
+  // 1. Metrics: Temperatures, Loads (From Python package 'metrics')
   networkStatus: any[] = [
-    { id: 'sub-syntagma', val: 45, type: 'temp' },
-    { id: 'sub-omonia', val: 45, type: 'load' },
+    { id: 'sub-syntagma', val: 0, type: 'temp' },
+    { id: 'sub-omonia', val: 0, type: 'load' },
     { id: 'gen-evangelismos', val: 100, type: 'fuel' }
   ];
 
-  // Μεταβλητές για το Popup Alert
+  // 2. ML Prediction: The missing variable!
+  predictionRisk: number = 0; 
+  predictionMsg: string = 'Initializing AI...';
+  
+  // 3. Metadata
+  lastTimestamp: string = '-';
   activeAlert: { type: string, msg: string } | null = null;
 
   constructor(
@@ -26,33 +32,51 @@ export class App implements OnInit {
   ) {}
 
   ngOnInit() {
-    // 1. Ροή Δεδομένων
-    this.simService.getSimulation().subscribe((data) => {
-      this.networkStatus = data;
-      this.cdr.detectChanges();
+    console.log("🚀 App Started. Connecting to Neuro-Symbolic Engine...");
+
+    // A. Listen to Data Stream (Replaces getSimulation)
+    this.simService.getUpdates().subscribe({
+      next: (fullPayload: any) => {
+        // fullPayload = { timestamp, metrics, prediction, alert }
+        
+        // 1. Update Sensors
+        this.networkStatus = fullPayload.metrics; 
+        
+        // 2. Update ML (Machine Learning)
+        if (fullPayload.prediction) {
+          this.predictionRisk = fullPayload.prediction.risk_percent;
+          this.predictionMsg = fullPayload.prediction.msg;
+        }
+
+        // 3. Update Timestamp
+        this.lastTimestamp = fullPayload.timestamp;
+
+        // 4. Update Alert (If present in the packet)
+        if (fullPayload.alert) {
+          this.activeAlert = fullPayload.alert;
+        } else {
+          // If the packet has no alert, clear ONLY if it's not 'WARNING' which we want to persist a bit
+          // For simplicity: If Python doesn't send an alert, clear it.
+          this.activeAlert = null;
+        }
+
+        this.cdr.detectChanges(); // Force Update
+      },
+      error: (err) => console.error('❌ Stream Error:', err)
     });
 
-    // 2. Ροή Alerts (ΝΕΟ)
-    this.simService.getAlerts().subscribe((alertData) => {
-      this.activeAlert = alertData; // Εμφάνισε το Alert
-      this.cdr.detectChanges();
-
-      // Αν είναι απλό Warning, κρύψε το μετά από 5 δευτερόλεπτα
-      // Αν είναι CRITICAL, άστο να φαίνεται μόνιμα!
-      if (alertData.type === 'WARNING') {
-        setTimeout(() => {
-          // Καθαρίζουμε το alert μόνο αν δεν έχει έρθει νεότερο critical εν τω μεταξύ
-          if (this.activeAlert && this.activeAlert.type === 'WARNING') {
-            this.activeAlert = null;
-            this.cdr.detectChanges();
-          }
-        }, 8000);
-      }
+    // B. Listen to Topology (Optional for now, added to avoid errors)
+    this.simService.getTopology().subscribe((nodes) => {
+      console.log("🗺️ New Map Topology received:", nodes);
+      // Here you will update the map in the future
     });
   }
 
+  // Helper for HTML
   getValue(nodeId: string): number {
     const node = this.networkStatus.find(n => n.id === nodeId);
-    return node ? node.val : 0;
+    // If it is temperature, return as is (can be negative)
+    // If it is load/fuel, return 0-100
+    return node ? Number(node.val) : 0;
   }
 }

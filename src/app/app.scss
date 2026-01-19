@@ -98,3 +98,21 @@ h1 { text-align: center; color: #333; margin-bottom: 30px; }
   70% { box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
   100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
 }
+
+.card h3 {
+  color: #333; /* Dark gray instead of light */
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.card p {
+  color: #555; /* Darker for readability */
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.card small {
+  color: #666;
+  font-weight: 600;
+}
