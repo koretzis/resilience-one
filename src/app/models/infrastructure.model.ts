@@ -1,18 +1,18 @@
 export interface InfrastructureNode {
-  id: string;        // Πρώην @id
-  name: string;      // Πρώην label
-  type: 'substation' | 'asset' | 'generator'; // Πρώην @type
-  location: [number, number]; // [Lat, Lng] για τον Χάρτη
-  supplies?: string[]; // IDs που τροφοδοτεί
+  id: string;        // Formerly @id
+  name: string;      // Formerly label
+  type: 'substation' | 'asset' | 'generator'; // Formerly @type
+  location: [number, number]; // [Lat, Lng] for the Map
+  supplies?: string[]; // IDs it supplies
 }
 
 export interface SensorReading {
   id: string;
-  val: number;       // Πρώην temperature
+  val: number;       // Formerly temperature
   type: 'temp' | 'load' | 'fuel';
 }
 
-// Helper για να μην χτυπάει το παλιό service
+// Helper to avoid errors in the old service
 export interface InfrastructureGraph {
   nodes: InfrastructureNode[];
 }

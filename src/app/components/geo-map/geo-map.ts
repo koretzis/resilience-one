@@ -15,13 +15,13 @@ import { SimulationService } from '../../services/simulation';
          (leafletMapReady)="onMapReady($event)">
     </div>
   `,
-  styles: [] // Τα στυλ τα βάλαμε στο styles.css για να τα βλέπει το Leaflet σίγουρα
+  styles: [] // Styles are placed in styles.css to ensure Leaflet sees them
 })
 export class GeoMapComponent implements OnInit {
   map!: L.Map;
   markers: { [id: string]: L.Marker } = {};
 
-  // Σκούρος χάρτης (CartoDB Dark Matter) για να φαίνονται τα Glowing LEDs
+  // Dark map (CartoDB Dark Matter) to make Glowing LEDs visible
   options = {
     layers: [
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { 
@@ -30,13 +30,13 @@ export class GeoMapComponent implements OnInit {
       })
     ],
     zoom: 13,
-    center: L.latLng(37.9900, 23.7300) // Κέντρο Αθήνας
+    center: L.latLng(37.9900, 23.7300) // Center of Athens
   };
 
   constructor(private simService: SimulationService) {}
 
   ngOnInit() {
-    // 1. Λήψη Τοποθεσιών (Τρέχει μία φορά στην αρχή)
+    // 1. Get Locations (Runs once at the beginning)
     this.simService.getTopology().subscribe((nodes: any[]) => {
       console.log("📍 Map Nodes Loaded:", nodes.length);
       nodes.forEach(node => {
@@ -44,7 +44,7 @@ export class GeoMapComponent implements OnInit {
       });
     });
 
-    // 2. Ζωντανή Ενημέρωση (Τρέχει συνέχεια)
+    // 2. Live Update (Runs continuously)
     this.simService.getUpdates().subscribe((data: any) => {
       const metrics = data.metrics;
       if (metrics) {
@@ -59,13 +59,13 @@ export class GeoMapComponent implements OnInit {
     this.map = map;
   }
 
-  // Προσθήκη LED Marker (Αρχική κατάσταση: Safe)
+  // Add LED Marker (Initial state: Safe)
   addMarker(id: string, lat: number, lng: number, title: string) {
     if (this.markers[id]) return;
 
-    // Χρησιμοποιούμε divIcon για να βάλουμε CSS classes (Glowing Dots)
+    // We use divIcon to add CSS classes (Glowing Dots)
     const ledIcon = L.divIcon({
-      className: 'custom-div-icon', // Απαραίτητο για το Leaflet
+      className: 'custom-div-icon', // Necessary for Leaflet
       html: `<div class="led-marker status-safe" id="icon-${id}"></div>`,
       iconSize: [24, 24],
       iconAnchor: [12, 12]
@@ -73,7 +73,7 @@ export class GeoMapComponent implements OnInit {
 
     const marker = L.marker([lat, lng], { icon: ledIcon, title: title }).addTo(this.map);
 
-    // Αρχικό Popup
+    // Initial Popup
     marker.bindPopup(`
       <div style="text-align:center; color: #333;">
         <h3>${title}</h3>
@@ -84,16 +84,16 @@ export class GeoMapComponent implements OnInit {
     this.markers[id] = marker;
   }
 
-  // Ανανέωση Χρώματος και Popup
+  // Update Color and Popup
   updateMarkerVisuals(id: string, val: number, type: string) {
     const marker = this.markers[id];
     if (!marker) return;
 
-    // --- 1. Υπολογισμός Κινδύνου ---
+    // --- 1. Risk Calculation ---
     let statusClass = 'status-safe';
     let isCritical = false;
 
-    // Λογική: Αν > 90% φορτίο ή < 20% καύσιμο -> Critical
+    // Logic: If > 90% load or < 20% fuel -> Critical
     if (type.includes('Fuel')) {
       if (val < 20) { statusClass = 'status-critical'; isCritical = true; }
       else if (val < 40) statusClass = 'status-warning';
@@ -103,11 +103,11 @@ export class GeoMapComponent implements OnInit {
       else if (val > 75) statusClass = 'status-warning';
     }
 
-    // --- 2. Αλλαγή Χρώματος (Αλλάζουμε το HTML του Icon) ---
-    // Αυτό κάνει το λαμπάκι να αλλάζει χρώμα χωρίς να ξαναφτιάχνουμε τον marker
+    // --- 2. Color Change (Changing Icon HTML) ---
+    // This makes the light change color without recreating the marker
     const iconElement = document.getElementById(`icon-${id}`);
     if (iconElement) {
-      // Καθαρίζουμε τα παλιά classes και βάζουμε το νέο
+      // Clear old classes and add the new one
       iconElement.className = `led-marker ${statusClass}`;
     }
 
@@ -115,7 +115,7 @@ export class GeoMapComponent implements OnInit {
     const valFixed = val.toFixed(1);
     const colorStyle = isCritical ? 'red' : (statusClass === 'status-warning' ? 'orange' : 'green');
     
-    // Φτιάχνουμε το περιεχόμενο HTML
+    // Construct HTML content
     const popupContent = `
       <div style="min-width: 140px; text-align: center; font-family: sans-serif;">
         <h4 style="margin: 0; color: #444; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
@@ -134,7 +134,7 @@ export class GeoMapComponent implements OnInit {
       </div>
     `;
 
-    // Εδώ είναι το μυστικό: Το setPopupContent ανανεώνει το ανοιχτό popup!
+    // Here is the secret: setPopupContent updates the open popup!
     marker.setPopupContent(popupContent);
   }
 }

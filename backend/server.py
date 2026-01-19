@@ -23,8 +23,8 @@ app.mount('/', socketio.ASGIApp(sio, app))
 # ... (Ontology Setup remains same - load resilience.owl) ...
 onto = get_ontology("resilience.owl").load()
 with onto:
-    # Εδώ θα μπορούσαμε να προσθέσουμε κανόνες για "Parent-Child Overload"
-    # Προς το παρόν κρατάμε τη βασική λογική για να μην σπάσει
+    # Here we could add rules for "Parent-Child Overload"
+    # For now, we keep the basic logic to avoid breaking changes
     pass 
 
 # Instances
@@ -71,7 +71,7 @@ async def request_next_step(sid):
     
     # Read Row
     row = scenario_data.iloc[data_iterator]
-    # Fast Forward: Πηδάμε 10 λεπτά ανά tick για να δούμε το 24ωρο γρήγορα
+    # Fast Forward: Skip 10 minutes per tick to see the 24-hour cycle quickly
     data_iterator += 10 
 
     # --- VALUES ---
@@ -84,7 +84,7 @@ async def request_next_step(sid):
     fuel = row['gen_fuel']
 
     # --- ML PREDICTION ---
-    # Προβλέπουμε βάσει των HV κόμβων και καιρού
+    # Predict based on HV nodes and weather
     risk_prob = ml_model.predict_proba([[temp, l_syn, l_kyp]])[0][1]
     risk_percent = round(risk_prob * 100, 1)
 

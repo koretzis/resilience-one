@@ -11,14 +11,14 @@ import { GeoMapComponent } from './components/geo-map/geo-map';
   styleUrls: ['./app.scss']
 })
 export class App implements OnInit {
-  // 1. Metrics: Θερμοκρασίες, Φορτία (Από το 'metrics' του Python πακέτου)
+  // 1. Metrics: Temperatures, Loads (From Python package 'metrics')
   networkStatus: any[] = [
     { id: 'sub-syntagma', val: 0, type: 'temp' },
     { id: 'sub-omonia', val: 0, type: 'load' },
     { id: 'gen-evangelismos', val: 100, type: 'fuel' }
   ];
 
-  // 2. ML Prediction: Η μεταβλητή που έλειπε!
+  // 2. ML Prediction: The missing variable!
   predictionRisk: number = 0; 
   predictionMsg: string = 'Initializing AI...';
   
@@ -34,29 +34,29 @@ export class App implements OnInit {
   ngOnInit() {
     console.log("🚀 App Started. Connecting to Neuro-Symbolic Engine...");
 
-    // A. Ακρόαση Ροής Δεδομένων (Αντικαθιστά το getSimulation)
+    // A. Listen to Data Stream (Replaces getSimulation)
     this.simService.getUpdates().subscribe({
       next: (fullPayload: any) => {
         // fullPayload = { timestamp, metrics, prediction, alert }
         
-        // 1. Ενημέρωση Αισθητήρων
+        // 1. Update Sensors
         this.networkStatus = fullPayload.metrics; 
         
-        // 2. Ενημέρωση ML (Machine Learning)
+        // 2. Update ML (Machine Learning)
         if (fullPayload.prediction) {
           this.predictionRisk = fullPayload.prediction.risk_percent;
           this.predictionMsg = fullPayload.prediction.msg;
         }
 
-        // 3. Ενημέρωση Timestamp
+        // 3. Update Timestamp
         this.lastTimestamp = fullPayload.timestamp;
 
-        // 4. Ενημέρωση Alert (Αν υπάρχει στο πακέτο)
+        // 4. Update Alert (If present in the packet)
         if (fullPayload.alert) {
           this.activeAlert = fullPayload.alert;
         } else {
-          // Αν το πακέτο δεν έχει alert, καθαρίζουμε ΜΟΝΟ αν δεν είναι 'WARNING' που θέλουμε να μείνει λίγο
-          // Για απλότητα: Αν η Python δεν στείλει alert, καθαρίζουμε.
+          // If the packet has no alert, clear ONLY if it's not 'WARNING' which we want to persist a bit
+          // For simplicity: If Python doesn't send an alert, clear it.
           this.activeAlert = null;
         }
 
@@ -65,18 +65,18 @@ export class App implements OnInit {
       error: (err) => console.error('❌ Stream Error:', err)
     });
 
-    // B. Ακρόαση Τοπολογίας (Προαιρετικό για τώρα, το βάζουμε για να μην χτυπάει)
+    // B. Listen to Topology (Optional for now, added to avoid errors)
     this.simService.getTopology().subscribe((nodes) => {
       console.log("🗺️ New Map Topology received:", nodes);
-      // Εδώ μελλοντικά θα ενημερώνεις τον χάρτη
+      // Here you will update the map in the future
     });
   }
 
-  // Helper για το HTML
+  // Helper for HTML
   getValue(nodeId: string): number {
     const node = this.networkStatus.find(n => n.id === nodeId);
-    // Αν είναι θερμοκρασία, επιστρέφουμε όπως είναι (μπορεί να είναι αρνητική)
-    // Αν είναι load/fuel, επιστρέφουμε 0-100
+    // If it is temperature, return as is (can be negative)
+    // If it is load/fuel, return 0-100
     return node ? Number(node.val) : 0;
   }
 }
