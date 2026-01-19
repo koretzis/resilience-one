@@ -16,17 +16,17 @@ export const selectCascadingRisks = createSelector(
   (nodes: InfrastructureNode[], readings: SensorReading[]) => {
     const alerts: string[] = [];
 
-    // Βοηθητική: Βρες την εγγραφή για ένα συγκεκριμένο Node ID
+    // Helper: Find the record for a specific Node ID
     const getReading = (id: string) => readings.find(r => r.id === id);
 
     // [Step 1: NEURO LAYER] 
     // Detect Anomalies based on Physics (Thresholds)
     const failingNodes = nodes.filter(node => {
-      const reading = getReading(node.id); // Χρησιμοποιούμε node.id (όχι @id)
+      const reading = getReading(node.id); // We use node.id (not @id)
       
       if (!reading) return false;
 
-      // Πολυ-παραμετρικός έλεγχος (PhD Logic)
+      // Multi-parametric check (PhD Logic)
       if (reading.type === 'temp' && reading.val > 90) return true; // Overheating
       if (reading.type === 'load' && reading.val > 90) return true; // Overload
       if (reading.type === 'fuel' && reading.val < 20) return true; // Low Fuel
@@ -38,8 +38,8 @@ export const selectCascadingRisks = createSelector(
     // Propagate Risk through Topology
     failingNodes.forEach(source => {
       
-      // Έλεγχος: Αν αυτός ο κόμβος τροφοδοτεί άλλους (supplies property)
-      // ΠΡΟΣΟΧΗ: Αυτό προϋποθέτει ότι το InfrastructureNode model έχει πεδίο 'supplies'
+      // Check: If this node supplies others (supplies property)
+      // CAUTION: This assumes the InfrastructureNode model has a 'supplies' field
       if (source.supplies && source.supplies.length > 0) {
         
         source.supplies.forEach(targetId => {
@@ -53,7 +53,7 @@ export const selectCascadingRisks = createSelector(
         });
       }
       
-      // Προσθήκη του ίδιου του κόμβου στη λίστα κινδύνου
+      // Add the node itself to the risk list
       alerts.push(`🚨 DIRECT FAILURE: ${source.name} is in critical state.`);
     });
 

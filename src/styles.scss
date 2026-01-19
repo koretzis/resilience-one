@@ -9,3 +9,45 @@ body {
   margin: 0;
   font-family: 'Roboto', sans-serif;
 }
+
+/* Glowing Markers Styles */
+.led-marker {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* 🟢 SAFE */
+.status-safe {
+  background-color: #4caf50; /* Green */
+  box-shadow: 0 0 15px #4caf50;
+}
+
+/* 🟠 WARNING (Pulse) */
+.status-warning {
+  background-color: #ff9800; /* Orange */
+  box-shadow: 0 0 20px #ff9800;
+  animation: pulse 1.5s infinite;
+}
+
+/* 🔴 CRITICAL (Fast Flash) */
+.status-critical {
+  background-color: #ff1744; /* Red */
+  box-shadow: 0 0 30px #ff1744;
+  animation: flash 0.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes flash {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.3); }
+  100% { opacity: 1; transform: scale(1); }
+}
