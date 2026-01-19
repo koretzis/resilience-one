@@ -49,6 +49,7 @@ The project fuses **Random Forest Machine Learning** (for risk prediction) with 
 Generate the synthetic historical data and train the AI models:
 ```bash
 cd backend
+pip install -r requirements.txt
 python generate_realism.py   # Creates scenario_realism.csv
 python train_advanced_ml.py  # Creates advanced_brain.pkl
 python create_ontology.py    # Creates resilience.owl
