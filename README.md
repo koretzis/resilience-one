@@ -1,107 +1,74 @@
-# ⚡ Neuro-Symbolic Resilience Engine
+# ⚡ Neuro-Symbolic Resilience Engine (v2.5)
 
-> **Research Project**: A Hybrid AI System for Detecting Cascading Failures in Critical Infrastructure.
+> **Research Project**: A Hybrid AI Digital Twin for monitoring Critical Infrastructure during extreme weather events.
 
-![Status](https://img.shields.io/badge/Status-Stable-success)
-![Stack](https://img.shields.io/badge/Tech-Angular%20%7C%20Python%20%7C%20OWL%2FSWRL-blue)
+![Status](https://img.shields.io/badge/Status-Operational-success)
+![UI](https://img.shields.io/badge/UI-Cyberpunk_Dark_Mode-orange)
+![AI](https://img.shields.io/badge/AI-Random_Forest_Predictor-blueviolet)
 
 ## 📖 Overview
-This project implements a **Neuro-Symbolic AI architecture** that fuses real-time sensor data (Sub-symbolic/Neural layer) with ontological reasoning (Symbolic layer) to monitor power grid resilience.
+This system implements a **Neuro-Symbolic architecture** designed to monitor the Athens Power Grid. It specifically simulates the "Elpida" blizzard scenario (January 2022), where extreme cold led to record-breaking electrical loads and localized infrastructure failures.
 
-Unlike traditional threshold-based systems, this engine understands **Semantic Context** (e.g., Redundancy, Dependency, Cascading Effects) to distinguish between local faults and systemic collapses.
+The project fuses **Random Forest Machine Learning** (for risk prediction) with **OWL/SWRL Ontological Reasoning** (for semantic impact analysis).
+
+---
 
 ## 🚀 Key Features
 
-### 1. Neuro-Symbolic Reasoning
-- **Data Layer (Python):** Processes raw telemetry (Temperature, Load, Fuel) and handles noise/safety overrides.
-- **Logic Layer (Owlready2 + HermiT):** Uses SWRL rules to infer high-level states:
-  - *Rule 1:* `Loss of Redundancy` → **WARNING** (Grid Unstable).
-  - *Rule 2:* `Grid Lost + Empty Generator` → **CRITICAL** (Total Blackout).
+### 1. Cyber-Physical Visualization
+- **Dark Matter Mapping:** A specialized geospatial view using CartoDB Dark Matter tiles for high-contrast monitoring.
+- **Glowing LED Markers:** Markers are no longer static icons but CSS-animated "LED dots" that reflect node health:
+  - 🟢 **Stable**: Green glow.
+  - 🟠 **Warning**: Pulsing orange (Load > 75%).
+  - 🔴 **Critical**: Rapid flashing red (Load > 90% or Failure).
+- **Live-Sync Popups:** Marker popups update their internal telemetry (Load, Temp, Fuel) in real-time without needing to be closed and reopened.
 
-### 2. Advanced State Management
-- **Zombie Connection Killer:** Automatically detects and blocks stale packets from previous browser sessions to prevent race conditions (flickering alerts) during page refreshes.
-- **Brain Wipe Mechanism:** The Ontology state acts as a singleton and performs a "Hard Reset" upon every new client connection, ensuring a clean simulation environment.
-- **Strict Hierarchical Logic:** Implemented a safety gate where physical constraints (e.g., "Fuel > 20%") override semantic inferences to prevent false positives.
+### 2. Digital Twin Reliability
+- **Realistic Load Profiling:** Modeled consumption patterns for Residential (Pagrati), Commercial (Gazi), and HV Hubs (Syntagma).
+- **Historical Replay:** The simulation follows the actual 24-hour timeline of the 2022 blizzard, showing how temperature drops correlate with grid stress.
 
-### 3. Real-Time Visualization
-- **Angular Dashboard:** Live monitoring of Critical Assets.
-- **Geospatial Map:** Leaflet.js integration for topological visualization.
-- **Heads-Up Alerts:** Visual warning system for inferred risks.
-
----
-
-## 🛠️ Architecture
-
-| Component | Technology | Description |
-|-----------|------------|-------------|
-| **Frontend** | Angular 17+ | Dashboard, Leaflet Map, RxJS Streams. |
-| **Backend** | Python FastAPI | WebSocket Server, Data processing. |
-| **Reasoning** | Owlready2 | Ontology management & SWRL execution. |
-| **Protocol** | Socket.IO | Real-time bi-directional communication. |
+### 3. Neuro-Symbolic Logic
+- **The Neuro Layer:** Predicts the probability of a "Grid Stress Event" based on ambient temperature and primary substation load.
+- **The Symbolic Layer:** Uses the **HermiT Reasoner** to infer complex states like `TotalBlackout` by analyzing the relationship between substations, hospitals, and backup generators.
 
 ---
 
-## ⚙️ Installation & Setup
+## 🛠️ Architecture & Stack
+| Layer | Technology |
+|---|---|
+| **Frontend** | Angular 19+, Leaflet.js, CSS3 Animations |
+| **Backend** | Python FastAPI, Socket.IO |
+| **AI/ML** | Scikit-Learn (Random Forest), Pandas |
+| **Reasoning** | Owlready2, HermiT DL Reasoner |
 
-### Prerequisites
-1. **Node.js** (v18+)
-2. **Python** (3.9+)
-3. **Java Runtime (JRE)** (Required for the HermiT Reasoner)
+---
 
-### 1. Backend Setup
-Navigate to the `backend` folder:
+## ⚙️ Setup Instructions
+
+### 1. Backend Preparation
+Generate the synthetic historical data and train the AI models:
 ```bash
 cd backend
-pip install -r requirements.txt
-# Ensure 'resilience.owl' is in the same directory
+python generate_realism.py   # Creates scenario_realism.csv
+python train_advanced_ml.py  # Creates advanced_brain.pkl
+python create_ontology.py    # Creates resilience.owl
 ```
 
-### 2. Frontend Setup
-Navigate to the root folder:
+### 2. Running the Simulation
+**Start Backend:**
 ```bash
-npm install
-```
-
----
-
-## ▶️ How to Run
-
-### Step 1: Start the Semantic Engine (Backend)
-```bash
-# In the backend terminal
 python server.py
 ```
-*You should see: `✅ Server Ready. Waiting for Browser...`*
 
-### Step 2: Start the Dashboard (Frontend)
+**Start Frontend:**
 ```bash
-# In the frontend terminal
+npm install --legacy-peer-deps
 ng serve
 ```
-*Open your browser at `http://localhost:4200`*
 
 ---
 
-## 🧪 Simulation Scenario (Timeline)
-
-The system runs a **20-second cascading failure simulation** automatically upon connection.
-
-| Time | Event | System Logic | Output |
-|------|-------|--------------|--------|
-| **0-5s** | Normal Ops | All nodes stable. | 🟢 **Safe** |
-| **6s** | Syntagma Fails | Temp > 90°C. Redundancy (Omonia) handles load. | 🟢 **Safe** (Smart Reasoning) |
-| **12s** | Omonia Overloads | Load > 90%. Redundancy Lost. | 🟠 **WARNING**: Grid Lost |
-| **20s** | Generator Empty | Fuel < 20%. Last defense fails. | 🔴 **CRITICAL**: Total Blackout |
-
----
-
-## 🐛 Troubleshooting
-
-**Q: I see "CRITICAL ALERT" immediately upon refresh.**
-*A: This was the "Zombie Connection" bug. It is fixed in the latest version. The server now enforces a strict session ID check and blocks old session packets.*
-
-**Q: The map shows 0 values.**
-*A: Wait 2-3 seconds. The simulation starts with a small delay to allow the Ontology to initialize and infer the initial state.*
-
-**Q: Reasoner Error in Python Console.**
-*A: Ensure Java is installed and added to your System PATH. Owlready2 needs Java to run the HermiT reasoner.*
+## 🧪 Simulation Timeline
+- **Morning (00:00 - 08:00):** Stable operations, low residential load.
+- **Mid-Day (09:00 - 16:00):** Increasing commercial load in Gazi/Omonia.
+- **Evening (17:00 - 23:00):** **Crisis Phase.** Ambient temperature drops below 0°C. Heating demand spikes. The AI Predictor signals high risk, and the Reasoner identifies localized blackouts as primary nodes exceed 95% capacity.
