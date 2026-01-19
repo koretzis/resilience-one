@@ -1,49 +1,76 @@
 from owlready2 import *
-import os
 
-# --- JAVA PATH (Ίδιο με τον server) ---
-java_path = r"C:\Program Files\Microsoft\jdk-25.0.1.8-hotspot\bin\java.exe"
-if os.path.exists(java_path): owlready2.JAVA_EXE = java_path
+def create_resilience_ontology():
+    # 1. Δημιουργία νέας Οντολογίας
+    onto = get_ontology("http://test.org/resilience.owl")
 
-# Δημιουργία Οντολογίας
-onto = get_ontology("http://test.org/resilience.owl")
+    with onto:
+        # --- ΚΛΑΣΕΙΣ (Concepts) ---
+        class InfrastructureNode(Thing): pass
+        class PowerSubstation(InfrastructureNode): pass
+        class CriticalAsset(InfrastructureNode): pass
+        class BackupGenerator(InfrastructureNode): pass
 
-print("🏗️  Defining Ontology Structure...")
+        # Καταστάσεις (States) - Αυτές θα χρησιμοποιήσει ο Reasoner
+        class FailedNode(InfrastructureNode): pass
+        class OverloadedNode(InfrastructureNode): pass
+        class LowFuelGenerator(InfrastructureNode): pass
+        class TotalBlackout(InfrastructureNode): pass
+        class GridUnstable(InfrastructureNode): pass
 
-with onto:
-    # --- CLASSES ---
-    class InfrastructureNode(Thing): pass
-    class PowerSubstation(InfrastructureNode): pass
-    class CriticalAsset(InfrastructureNode): pass
-    class BackupGenerator(InfrastructureNode): pass
+        # --- PROPERTIES (Triplets / Relationships) ---
+        class supplies(ObjectProperty):
+            domain = [PowerSubstation]
+            range = [CriticalAsset]
 
-    # --- TAGS ---
-    class FailedNode(InfrastructureNode): pass
-    class OverloadedNode(InfrastructureNode): pass
-    class LowFuelGenerator(InfrastructureNode): pass
-    
-    # --- STATES ---
-    class GridUnstable(InfrastructureNode): pass
-    class TotalBlackout(InfrastructureNode): pass
+        class has_backup(ObjectProperty):
+            domain = [CriticalAsset]
+            range = [BackupGenerator]
 
-    # --- PROPERTIES ---
-    class supplies(ObjectProperty): 
-        domain = [PowerSubstation]; range = [CriticalAsset]
-    class has_backup(ObjectProperty): 
-        domain = [CriticalAsset]; range = [BackupGenerator]
-    class is_redundant_to(ObjectProperty): 
-        domain = [PowerSubstation]; range = [PowerSubstation]
+        # Data Properties (Attributes)
+        class hasLoad(DataProperty, FunctionalProperty):
+            domain = [PowerSubstation]
+            range = [float]
 
-    # --- RULES (SWRL) ---
-    # Rule 1: Warning
-    rule1 = Imp()
-    rule1.set_as_rule("supplies(?p1, ?a), is_redundant_to(?p2, ?p1), FailedNode(?p1), OverloadedNode(?p2) -> GridUnstable(?a)")
-    
-    # Rule 2: Critical
-    rule2 = Imp()
-    rule2.set_as_rule("GridUnstable(?a), has_backup(?a, ?g), LowFuelGenerator(?g) -> TotalBlackout(?a)")
+        class hasAmbientTemp(DataProperty, FunctionalProperty):
+            domain = [PowerSubstation]
+            range = [float]
 
-# --- SAVE TO FILE ---
-outfile = "resilience.owl"
-onto.save(file=outfile)
-print(f"✅ Ontology saved successfully as '{outfile}'")
+        class hasFuelLevel(DataProperty, FunctionalProperty):
+            domain = [BackupGenerator]
+            range = [float]
+
+        # --- INSTANCES (Individuals) ---
+        # IDs που ταιριάζουν ακριβώς με τον server.py
+        syntagma = PowerSubstation("sub-syntagma")
+        omonia = PowerSubstation("sub-omonia")
+        evangelismos = CriticalAsset("hosp-evangelismos")
+        gen = BackupGenerator("gen-evangelismos")
+
+        # Αρχικά Triplets (Συνδέσεις)
+        syntagma.supplies.append(evangelismos)
+        evangelismos.has_backup.append(gen)
+
+        # --- SWRL RULES (The Logic) ---
+        # Κανόνας 1: Αν ένας σταθμός που τροφοδοτεί ένα asset αποτύχει (FailedNode) 
+        # ΚΑΙ η γεννήτρια έχει χαμηλό καύσιμο, τότε έχουμε TotalBlackout.
+        rule1 = Imp()
+        rule1.set_as_rule("""
+            PowerSubstation(?s) ^ supplies(?s, ?a) ^ FailedNode(?s) ^ 
+            CriticalAsset(?a) ^ has_backup(?a, ?g) ^ LowFuelGenerator(?g) 
+            -> TotalBlackout(?a)
+        """)
+
+        # Κανόνας 2: Αν ο σταθμός είναι Overloaded, το δίκτυο είναι ασταθές
+        rule2 = Imp()
+        rule2.set_as_rule("""
+            PowerSubstation(?s) ^ OverloadedNode(?s) ^ supplies(?s, ?a) 
+            -> GridUnstable(?a)
+        """)
+
+    # Αποθήκευση στο αρχείο
+    onto.save(file="resilience.owl", format="rdfxml")
+    print("✅ Ontology 'resilience.owl' created successfully with Triplets and Rules!")
+
+if __name__ == "__main__":
+    create_resilience_ontology()
