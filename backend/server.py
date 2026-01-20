@@ -16,6 +16,18 @@ ml_model = joblib.load("advanced_brain.pkl")
 scenario_data = pd.read_csv("scenario_realism.csv")
 data_iterator = 0 
 
+def build_model_input(temp, l_syn, l_kyp):
+    if hasattr(ml_model, "feature_names_in_"):
+        cols = list(ml_model.feature_names_in_)
+    else:
+        cols = ["temp_ambient", "load_syntagma", "load_kypseli"]
+    values = {
+        "temp_ambient": temp,
+        "load_syntagma": l_syn,
+        "load_kypseli": l_kyp,
+    }
+    return pd.DataFrame([[values.get(col) for col in cols]], columns=cols)
+
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
 app = FastAPI()
 app.mount('/', socketio.ASGIApp(sio, app))
@@ -85,7 +97,8 @@ async def request_next_step(sid):
 
     # --- ML PREDICTION ---
     # Προβλέπουμε βάσει των HV κόμβων και καιρού
-    risk_prob = ml_model.predict_proba([[temp, l_syn, l_kyp]])[0][1]
+    model_input = build_model_input(temp, l_syn, l_kyp)
+    risk_prob = ml_model.predict_proba(model_input)[0][1]
     risk_percent = round(risk_prob * 100, 1)
 
     # --- ONTOLOGY LOGIC ---
